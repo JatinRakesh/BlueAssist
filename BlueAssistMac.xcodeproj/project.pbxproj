@@ -35,16 +35,6 @@
 			path = BlueAssistMac;
 			sourceTree = "<group>";
 		};
-		917FFE092FACD78A00D9B58E /* BlueAssistMacTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlueAssistMacTests;
-			sourceTree = "<group>";
-		};
-		917FFE132FACD78A00D9B58E /* BlueAssistMacUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlueAssistMacUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				917FFDF92FACD78800D9B58E /* BlueAssistMac */,
-				917FFE092FACD78A00D9B58E /* BlueAssistMacTests */,
-				917FFE132FACD78A00D9B58E /* BlueAssistMacUITests */,
 				917FFDF82FACD78800D9B58E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				917FFE082FACD78A00D9B58E /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				917FFE092FACD78A00D9B58E /* BlueAssistMacTests */,
-			);
 			name = BlueAssistMacTests;
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				917FFE122FACD78A00D9B58E /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				917FFE132FACD78A00D9B58E /* BlueAssistMacUITests */,
 			);
 			name = BlueAssistMacUITests;
 			packageProductDependencies = (
@@ -396,9 +378,20 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "BlueAssist uses Bluetooth to scan nearby devices and diagnose connection problems.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -426,9 +419,20 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "BlueAssist uses Bluetooth to scan nearby devices and diagnose connection problems.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

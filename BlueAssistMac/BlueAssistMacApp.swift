@@ -1,32 +1,31 @@
+
 //
-//  BlueAssistMacApp.swift
-//  BlueAssistMac
+//  BlueAssistApp.swift
+//  BlueAssist
 //
 //  Created by Jatin Rakesh on 7/5/26.
-//
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
-struct BlueAssistMacApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+struct BluetoothDoctorApp: App {
+    init() {
+        BluetoothDoctorSettings.registerDefaults()
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(sharedModelContainer)
+
+        #if os(macOS)
+        Settings {
+            MacSettingsView()
+        }
+        #endif
     }
 }
+
+
+
