@@ -4,6 +4,7 @@ import SwiftUI
 import Foundation
 import CoreBluetooth
 import Combine
+import AppKit
 
 enum SidebarSelection: Hashable {
     case ble(UUID)
@@ -38,11 +39,11 @@ struct ContentView: View {
 
     @StateObject private var macBluetoothManager = MacSystemBluetoothManager()
     @StateObject private var bluetoothManager = BluetoothManager()
-
-    @State private var showingFindMyDevice = false
+    @State private var showingFeedbackSheet = false
     @State private var searchText: String = ""
     @State private var selection: SidebarSelection?
-
+    @State private var  showingFindMyDevice = false
+    @State private var showingTipJar = false
     var selectedMacDevice: MacSystemBluetoothDevice? {
         guard case let .mac(id) = selection else { return nil }
         return macBluetoothManager.pairedDevices.first { $0.id == id }
@@ -50,57 +51,41 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Section("Paired Mac Bluetooth Devices") {
-                    if filteredMacDevices.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("No paired Mac devices loaded")
-                                .font(.headline)
-
-                            Text(macBluetoothManager.statusText)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        ForEach(filteredMacDevices) { device in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(device.name)
-                                    .font(.headline)
-
-                                HStack {
-                                    Text(device.isConnected ? "Connected" : "Not Connected")
-                                        .foregroundStyle(device.isConnected ? .green : .red)
-
-                                    Text(device.isPaired ? "Paired" : "Not Paired")
-                                        .foregroundStyle(device.isPaired ? .green : .red)
-                                }
-                                .font(.caption)
-                            }
-                            .padding(.vertical, 4)
-                            .tag(SidebarSelection.mac(device.id))
-                        }
+            BlueAssistSidebar(
+                bluetoothManager: bluetoothManager,
+                macBluetoothManager: macBluetoothManager,
+                macDevices: filteredMacDevices,
+                bleDevices: filteredBLEDevices,
+                selection: $selection
+            )
+            .searchable(text: $searchText, prompt: "Search devices")
+            .navigationTitle("BlueAssist")
+            .toolbar {
+                Button {
+                    if let url = URL(string: "https://forms.gle/UTcGBoxxdLGM6tMn7") {
+                        NSWorkspace.shared.open(url)
                     }
+                } label: {
+                    Label("Feedback", systemImage: "bubble.left")
                 }
 
-                Section("Nearby Bluetooth Devices") {
-                    if filteredBLEDevices.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("No nearby BLE devices found")
-                                .font(.headline)
+                Button {
+                    showingTipJar = true
+                } label: {
+                    Label("Support", systemImage: "heart.fill")
+                }
 
-                            Text(bluetoothManager.statusText)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        ForEach(filteredBLEDevices) { device in
-                            DeviceRow(
-                                device: device,
-                                bluetoothManager: bluetoothManager
-                            )
-                            .tag(SidebarSelection.ble(device.id))
-                        }
-                    }
+                Button("Scan") {
+                    bluetoothManager.startScanning()
+                    macBluetoothManager.loadPairedDevices()
+                }
+
+                Button("Stop") {
+                    bluetoothManager.stopScanning()
+                }
+
+                Button("Refresh Paired") {
+                    macBluetoothManager.loadPairedDevices()
                 }
             }
             .onChange(of: selection) { _, newSelection in
@@ -117,35 +102,7 @@ struct ContentView: View {
                     bluetoothManager.selectedDevice = nil
                 }
             }
-            .searchable(text: $searchText, prompt: "Search for a paired device")
-            .navigationTitle("BlueAssist")
-            .toolbar {
-                Button("Find My Device") {
-                    showingFindMyDevice = true
-                }
-
-                Button("Scan") {
-                    bluetoothManager.startScanning()
-                    macBluetoothManager.loadPairedDevices()
-                }
-
-                Button("Stop") {
-                    bluetoothManager.stopScanning()
-                }
-
-                Button("Refresh Paired") {
-                    macBluetoothManager.loadPairedDevices()
-                }
-            }
-            .sheet(isPresented: $showingFindMyDevice) {
-                FindMyDeviceView(
-                    bluetoothManager: bluetoothManager,
-                    macBluetoothManager: macBluetoothManager,
-                    selection: $selection
-                )
-            }
-        } detail: {
-            switch selection {
+        } detail: {            switch selection {
             case .ble:
                 DeviceDetailView(
                     bluetoothManager: bluetoothManager,
@@ -162,23 +119,17 @@ struct ContentView: View {
                     Text("Select a paired Mac Bluetooth device.")
                         .foregroundStyle(.secondary)
                 }
-
             case .none:
-                VStack(spacing: 12) {
-                    Text(bluetoothManager.statusText)
-                        .font(.headline)
-
-                    Text("Select a Bluetooth device to view details.")
-                        .foregroundStyle(.secondary)
-
-                    Button("Start Scan") {
-                        bluetoothManager.startScanning()
-                        macBluetoothManager.loadPairedDevices()
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
+                StartDashboardView(
+                    bluetoothManager: bluetoothManager,
+                    macBluetoothManager: macBluetoothManager,
+                    selection: $selection
+                )
             }
+        }
+        
+        .sheet(isPresented: $showingTipJar) {
+            TipJarView()
         }
         .onAppear {
             bluetoothManager.startScanning()
@@ -193,143 +144,151 @@ struct ContentView: View {
     }
 }
 
-struct DeviceRow: View {
-    let device: BluetoothDevice
-    @ObservedObject var bluetoothManager: BluetoothManager
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(bluetoothManager.displayName(for: device))
-                .font(.headline)
-
-            HStack(spacing: 8) {
-                Text(device.signalLabel)
-                    .foregroundStyle(device.signalColor)
-
-                Text("\(device.rssi) dBm")
-                    .foregroundStyle(device.signalColor)
-
-                Text(device.connectableText)
-                    .foregroundStyle(device.connectableColor)
-            }
-            .font(.caption)
-        }
-        .padding(.vertical, 4)
-    }
-}
 
 struct DeviceDetailView: View {
     @ObservedObject var bluetoothManager: BluetoothManager
     @ObservedObject var macBluetoothManager: MacSystemBluetoothManager
+    @AppStorage(BluetoothDoctorSettings.showAdvancedEvidence)
+    private var showAdvancedEvidence = true
     @State private var nicknameText: String = ""
 
     var body: some View {
         if let device = bluetoothManager.selectedDevice {
-            List {
-                Section("Nickname") {
-                    TextField("Custom name for this device", text: $nicknameText)
-
-                    Button("Save Nickname") {
-                        bluetoothManager.saveNickname(nicknameText, for: device)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let diagnosis = bluetoothManager.diagnosis {
+                        DiagnosisSummaryView(
+                            title: "BLE Diagnosis",
+                            reason: diagnosis.reason.rawValue,
+                            confidence: diagnosis.confidence,
+                            severity: diagnosis.severity,
+                            fix: diagnosis.fix,
+                            evidence: diagnosis.evidence,
+                            showsEvidence: showAdvancedEvidence
+                        )
                     }
 
-                    if let savedNickname = bluetoothManager.nickname(for: device) {
-                        LabeledContent("Saved Name", value: savedNickname)
-                    }
-                }
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Actions")
+                            .font(.headline)
 
-                Section("Status") {
-                    LabeledContent("BlueAssist Status", value: bluetoothManager.statusText)
+                        HStack(spacing: 12) {
+                            if device.isConnectable {
+                                Button {
+                                    bluetoothManager.inspectSelectedBLEDevice()
+                                } label: {
+                                    Label("Inspect BLE data", systemImage: "waveform.path.ecg")
+                                }
+                                .buttonStyle(.plain)
+                                .blueGlassControl(prominent: true)
+                                Text("This does not pair the device or connect audio/keyboard profiles. It only opens a BLE inspection connection so BlueAssistMac can read public services.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Button {
+                                    bluetoothManager.disconnect()
+                                } label: {
+                                    Label("Disconnect", systemImage: "xmark.circle")
+                                }
+                                .buttonStyle(.plain)
+                                .blueGlassControl()
+                            } else {
+                                Text("This device is not connectable through BlueAssistMac.")
+                                    .foregroundStyle(.secondary)
+                            }
 
-                    if let connectedName = bluetoothManager.connectedDeviceName {
-                        LabeledContent("Connected Device", value: connectedName)
-                    } else {
-                        LabeledContent("Connected Device", value: "None")
-                    }
-                }
-
-                Section("Device") {
-                    LabeledContent("Name", value: device.name)
-                    LabeledContent("Identifier", value: device.id.uuidString)
-                    LabeledContent("Connectable", value: device.connectableText)
-                }
-
-                Section("Signal") {
-                    LabeledContent("RSSI", value: "\(device.rssi) dBm")
-                    LabeledContent("Signal Quality", value: device.signalLabel)
-                }
-
-                Section("Battery") {
-                    if let batteryLevel = bluetoothManager.batteryLevel {
-                        LabeledContent("Battery Level", value: "\(batteryLevel)%")
-                    } else {
-                        LabeledContent("Battery Level", value: "Not available")
-                    }
-                }
-
-                Section("Advertised Services") {
-                    Text(device.advertisedServicesText)
-                        .font(.caption)
-                        .textSelection(.enabled)
-                }
-
-                Section("Discovered Services") {
-                    if bluetoothManager.discoveredServices.isEmpty {
-                        Text("Connect to the device to discover services.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(bluetoothManager.discoveredServices, id: \.self) { service in
-                            Text(service)
-                                .font(.caption)
-                                .textSelection(.enabled)
+                            Button {
+                                bluetoothManager.startDiagnosisRun()
+                                macBluetoothManager.loadPairedDevices()
+                            } label: {
+                                Label("Retry diagnosis", systemImage: "arrow.clockwise")
+                            }
+                            .buttonStyle(.plain)
+                            .blueGlassControl()
                         }
                     }
-                }
+                    .blueGlassPanel(cornerRadius: 22)
 
-                Section("Diagnosis") {
-                    if let diagnosis = bluetoothManager.diagnosis {
-                        LabeledContent("Reason", value: diagnosis.reason.rawValue)
-                        LabeledContent("Confidence", value: "\(Int(diagnosis.confidence * 100))%")
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Device info")
+                            .font(.headline)
 
-                        Text(diagnosis.fix)
-                            .foregroundStyle(.secondary)
+                        InfoLine(
+                            title: "Name",
+                            value: bluetoothManager.displayName(for: device)
+                        )
 
-                        if !diagnosis.evidence.isEmpty {
-                            ForEach(diagnosis.evidence, id: \.self) { item in
-                                Text("• \(item)")
+                        InfoLine(
+                            title: "Identifier",
+                            value: String(device.id.uuidString.prefix(8)) + "…"
+                        )
+
+                        InfoLine(
+                            title: "Signal",
+                            value: "\(device.signalLabel) · \(device.rssi) dBm",
+                            valueColor: device.signalColor
+                        )
+
+                        InfoLine(
+                            title: "Connectable",
+                            value: device.connectableText,
+                            valueColor: device.connectableColor
+                        )
+
+                        if let batteryLevel = bluetoothManager.batteryLevel {
+                            InfoLine(
+                                title: "Battery",
+                                value: "\(batteryLevel)%"
+                            )
+                        } else {
+                            InfoLine(
+                                title: "Battery",
+                                value: "Not exposed"
+                            )
+                        }
+                    }
+                    .blueGlassPanel(cornerRadius: 22)
+
+                    DisclosureGroup("Advanced diagnostics") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            InfoLine("RSSI", "\(device.rssi) dBm")
+                            InfoLine("Signal quality", device.signalLabel)
+                            InfoLine("Advertised services", device.advertisedServicesText)
+
+                            if bluetoothManager.discoveredServices.isEmpty {
+                                Text("Connect to the device to discover services.")
                                     .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(bluetoothManager.discoveredServices, id: \.self) { service in
+                                    Text(service)
+                                        .font(.caption)
+                                        .textSelection(.enabled)
+                                }
                             }
                         }
-                    } else {
-                        Text("Select a device to diagnose.")
-                            .foregroundStyle(.secondary)
+                        .padding(.top, 8)
                     }
-                }
+                    .blueGlassPanel(cornerRadius: 22)
 
-                Section("Actions") {
-                    if device.isConnectable {
-                        Button("Connect and Inspect") {
-                            bluetoothManager.connectToSelectedDevice()
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Nickname")
+                            .font(.headline)
+
+                        TextField("Custom name for this device", text: $nicknameText)
+
+                        Button("Save nickname") {
+                            bluetoothManager.saveNickname(nicknameText, for: device)
                         }
 
-                        Button("Disconnect") {
-                            bluetoothManager.disconnect()
+                        if let savedNickname = bluetoothManager.nickname(for: device) {
+                            InfoLine("Saved name", savedNickname)
                         }
-                    } else {
-                        Text("This device is not connectable through BlueAssist.")
-                            .foregroundStyle(.secondary)
-
-                        Text("It may be a system-managed Bluetooth device, Classic Bluetooth device, or a BLE broadcaster.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
-
-                    Button("Scan Again") {
-                        bluetoothManager.startScanning()
-                        macBluetoothManager.loadPairedDevices()
-                    }
+                    .blueGlassPanel(cornerRadius: 22)
                 }
+                .padding(24)
             }
+            .background(BlueAssistBackground())
             .navigationTitle(bluetoothManager.displayName(for: device))
         } else {
             VStack(spacing: 12) {
@@ -350,11 +309,33 @@ struct DeviceDetailView: View {
         }
     }
 }
+extension InfoLine {
+    init(_ title: String, _ value: String, valueColor: Color = .secondary) {
+        self.title = title
+        self.value = value
+        self.valueColor = valueColor
+    }
+}
 struct Diagnosis{
     let reason: FailureReason
     let confidence: Double
     let evidence: [String]
     let fix: String
+
+    var severity: DiagnosticSeverity {
+        switch reason {
+        case .readyToScan, .readyToInspect, .goodSignalReadyToConnect:
+            return .healthy
+        case .connectedButLimitedData, .weakSignalMayFail, .noDiagnosticData:
+            return .warning
+        case .bluetoothOff, .permissionDenied, .deviceTooFar, .deviceBatteryLow,
+             .deviceNotInPairingMode, .alreadyConnectedElsewhere, .stalePairingKeys,
+             .deviceFirmwareIssue, .unsupportedDevice, .notConnectable:
+            return .issue
+        case .unknown:
+            return .unknown
+        }
+    }
 }
 enum FailureReason: String {
     case readyToScan = "Bluetooth is on"
@@ -411,7 +392,7 @@ func diagnoseConnectionFailure(
             reason: .unknown,
             confidence: 0.4,
             evidence: ["Bluetooth state is not known yet"],
-            fix: "Wait while BlueAssist checks Bluetooth status."
+            fix: "Wait while BlueAssistMac checks Bluetooth status."
         )
     }
 
@@ -428,7 +409,7 @@ func diagnoseConnectionFailure(
         return Diagnosis(
             reason: .permissionDenied,
             confidence: 1.0,
-            evidence: ["BlueAssist does not have Bluetooth permission"],
+            evidence: ["BlueAssistMac does not have Bluetooth permission"],
             fix: "Enable Bluetooth permission in System Settings → Privacy & Security → Bluetooth."
         )
     }
@@ -439,6 +420,25 @@ func diagnoseConnectionFailure(
             confidence: 0.95,
             evidence: ["Device battery is \(battery)%"],
             fix: "Charge the device, then try again."
+        )
+    }
+
+    if let connectionError {
+        var evidence = ["Connection error: \(connectionError.localizedDescription)"]
+
+        if let rssi = lastRSSI {
+            evidence.append("Last signal strength was \(rssi) dBm")
+        }
+
+        if let isConnectable {
+            evidence.append(isConnectable ? "Device advertised as connectable" : "Device did not advertise as connectable")
+        }
+
+        return Diagnosis(
+            reason: .deviceFirmwareIssue,
+            confidence: 0.7,
+            evidence: evidence,
+            fix: "Wake or restart the device, move it closer, disconnect it from other computers or phones, then try Connect and Inspect again."
         )
     }
 
@@ -538,13 +538,26 @@ func diagnoseConnectionFailure(
     return Diagnosis(
         reason: .unknown,
         confidence: 0.35,
-        evidence: ["BlueAssist does not yet have enough connection data"],
+        evidence: ["BlueAssistMac does not yet have enough connection data"],
         fix: "Try Connect and Inspect, move closer, or check whether the device is already connected somewhere else."
     )
 }
 
 
+enum BlueAssistBluetoothError: LocalizedError {
+    case connectionTimedOut
+
+    var errorDescription: String? {
+        switch self {
+        case .connectionTimedOut:
+            return "BlueAssistMac did not receive a BLE connection response after 12 seconds."
+        }
+    }
+}
 final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+    @Published var trackedRSSI: [UUID: [Int]] = [:]
+    private var connectionTimeoutWorkItem: DispatchWorkItem?
+    @Published var isFindingDevice = false
     @Published var bluetoothState: CBManagerState = .unknown
     @Published var devices: [BluetoothDevice] = []
     @Published var selectedDevice: BluetoothDevice?
@@ -571,8 +584,63 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
             ]
         )
     }
+
+    private func scheduleConnectionTimeout(for device: BluetoothDevice) {
+        connectionTimeoutWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+
+            if self.connectedPeripheral?.identifier == device.id {
+                self.centralManager?.cancelPeripheralConnection(device.peripheral)
+            }
+
+            self.statusText = "\(self.displayName(for: device)) Did not respond to BLE inspection."
+
+            self.diagnosis = diagnoseConnectionFailure(
+                bluetoothState: self.bluetoothState,
+                lastRSSI: device.rssi,
+                wasAdvertising: true,
+                isConnectable: device.isConnectable,
+                hasAdvertisedServices: device.hasAdvertisedServices,
+                connectionError: BlueAssistBluetoothError.connectionTimedOut,
+                batteryLevel: self.batteryLevel,
+                disappearedDuringConnection: false
+            )
+        }
+
+        connectionTimeoutWorkItem = workItem
+
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + 12,
+            execute: workItem
+        )
+    }
+    private func cleanedName(_ value: String?) -> String? {
+        guard let value else { return nil }
+
+        let cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !cleaned.isEmpty else { return nil }
+        guard cleaned.lowercased() != "unknown" else { return nil }
+        guard cleaned.lowercased() != "unknown device" else { return nil }
+
+        return cleaned
+    }
+
+    private func cachedNameKey(for id: UUID) -> String {
+        "ble_real_name_\(id.uuidString)"
+    }
+
+    private func cachedName(for id: UUID) -> String? {
+        cleanedName(UserDefaults.standard.string(forKey: cachedNameKey(for: id)))
+    }
+
+    private func saveCachedName(_ name: String, for id: UUID) {
+        UserDefaults.standard.set(name, forKey: cachedNameKey(for: id))
+    }
     func nicknameKey(for id: UUID) -> String {
-        "nickname_\(id.uuidString)"
+        "Nickname_\(id.uuidString)"
     }
 
     func nickname(for device: BluetoothDevice) -> String? {
@@ -661,6 +729,95 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
         }
     }
 
+    func startDiagnosisRun() {
+        let duration = UserDefaults.standard.integer(
+            forKey: BluetoothDoctorSettings.scanDuration
+        )
+
+        let safeDuration = duration == 0 ? 8 : duration
+
+        statusText = "Running Bluetooth diagnosis..."
+
+        diagnosis = diagnoseConnectionFailure(
+            bluetoothState: bluetoothState,
+            lastRSSI: nil,
+            wasAdvertising: false,
+            isConnectable: nil,
+            hasAdvertisedServices: nil,
+            connectionError: nil,
+            batteryLevel: nil,
+            disappearedDuringConnection: false
+        )
+
+        startScanning()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(safeDuration)) {
+            self.stopScanning()
+
+            let weakDevices = self.devices.filter { $0.rssi < -80 }
+            let inspectableDevices = self.devices.filter { $0.isConnectable }
+
+            if self.bluetoothState != .poweredOn {
+                self.diagnosis = diagnoseConnectionFailure(
+                    bluetoothState: self.bluetoothState,
+                    lastRSSI: nil,
+                    wasAdvertising: false,
+                    isConnectable: nil,
+                    hasAdvertisedServices: nil,
+                    connectionError: nil,
+                    batteryLevel: nil,
+                    disappearedDuringConnection: false
+                )
+                return
+            }
+
+            if self.devices.isEmpty {
+                self.statusText = "Diagnosis complete: no nearby BLE signals found."
+
+                self.diagnosis = Diagnosis(
+                    reason: .noDiagnosticData,
+                    confidence: 0.7,
+                    evidence: [
+                        "Bluetooth is powered on",
+                        "No nearby BLE advertisements were found during the scan"
+                    ],
+                    fix: "Wake the device, move it closer, put it in pairing mode if needed, then run diagnosis again."
+                )
+                return
+            }
+
+            if !weakDevices.isEmpty {
+                self.statusText = "Diagnosis complete: \(weakDevices.count) weak BLE signal(s) found."
+
+                self.diagnosis = Diagnosis(
+                    reason: .weakSignalMayFail,
+                    confidence: 0.75,
+                    evidence: [
+                        "Bluetooth is powered on",
+                        "Found \(self.devices.count) nearby BLE signal(s)",
+                        "\(weakDevices.count) signal(s) are weak",
+                        "\(inspectableDevices.count) device(s) may expose BLE data"
+                    ],
+                    fix: "Select the device you care about from the sidebar. If its signal is weak, move it closer before inspecting BLE data."
+                )
+                return
+            }
+
+            self.statusText = "Diagnosis complete: Bluetooth looks ready."
+
+            self.diagnosis = Diagnosis(
+                reason: .readyToScan,
+                confidence: 0.9,
+                evidence: [
+                    "Bluetooth is powered on",
+                    "Found \(self.devices.count) nearby BLE signal(s)",
+                    "\(inspectableDevices.count) device(s) may expose BLE data",
+                    "No very weak signals were detected"
+                ],
+                fix: "Select the device you want to troubleshoot from the sidebar. BlueAssistMac will show device-specific next steps."
+            )
+        }
+    }
     func startScanning() {
         guard let centralManager else {
             statusText = "Bluetooth manager has not been created yet."
@@ -683,7 +840,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
             statusText = "Bluetooth is powered off on this Mac."
 
         case .unauthorized:
-            statusText = "BlueAssist does not have Bluetooth permission."
+            statusText = "BlueAssistMac does not have Bluetooth permission."
 
         case .unsupported:
             statusText = "Bluetooth is unsupported for this app/target."
@@ -720,22 +877,28 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
         )
     }
 
-
     func displayName(
         peripheral: CBPeripheral,
         advertisementData: [String: Any]
     ) -> String {
-        if let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String,
-           !advertisedName.isEmpty {
+
+        if let advertisedName = cleanedName(
+            advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        ) {
+            saveCachedName(advertisedName, for: peripheral.identifier)
             return advertisedName
         }
 
-        if let peripheralName = peripheral.name,
-           !peripheralName.isEmpty {
+        if let peripheralName = cleanedName(peripheral.name) {
+            saveCachedName(peripheralName, for: peripheral.identifier)
             return peripheralName
         }
 
-        return "Unknown Device"
+        if let cached = cachedName(for: peripheral.identifier) {
+            return cached
+        }
+
+        return "Unnamed BLE Device \(peripheral.identifier.uuidString.prefix(4))"
     }
 
     func centralManager(
@@ -763,7 +926,9 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
         }
 
         devices.sort { $0.rssi > $1.rssi }
+
     }
+   
     func centralManager(
         _ central: CBCentralManager,
         didConnect peripheral: CBPeripheral
@@ -780,7 +945,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
             reason: .connectedButLimitedData,
             confidence: 0.8,
             evidence: [
-                "BlueAssist connected to the BLE device",
+                "BlueAssistMac connected to the BLE device",
                 "Service discovery has started"
             ],
             fix: "Waiting for services. Battery will appear only if the device exposes the standard BLE Battery Service."
@@ -833,6 +998,19 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
         connectedPeripheral = nil
         batteryLevel = nil
         discoveredServices.removeAll()
+
+        if let error {
+            diagnosis = diagnoseConnectionFailure(
+                bluetoothState: bluetoothState,
+                lastRSSI: selectedDevice?.rssi,
+                wasAdvertising: selectedDevice != nil,
+                isConnectable: selectedDevice?.isConnectable,
+                hasAdvertisedServices: selectedDevice?.hasAdvertisedServices,
+                connectionError: error,
+                batteryLevel: nil,
+                disappearedDuringConnection: false
+            )
+        }
         
     }
 
@@ -880,7 +1058,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
                     "Connected successfully",
                     "No BLE services were discovered"
                 ],
-                fix: "The device connected, but it does not expose readable services to BlueAssist."
+                fix: "The device connected, but it does not expose readable services to BlueAssistMac."
             )
         } else if services.contains(where: { $0.uuid == batteryServiceUUID }) {
             diagnosis = Diagnosis(
@@ -891,7 +1069,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
                     "Battery Service was found",
                     "Discovered \(services.count) BLE service(s)"
                 ],
-                fix: "BlueAssist found the Battery Service and is trying to read the battery level."
+                fix: "BlueAssistMac found the Battery Service and is trying to read the battery level."
             )
         } else {
             diagnosis = Diagnosis(
@@ -938,7 +1116,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 
         centralManager?.cancelPeripheralConnection(connectedPeripheral)
     }
-    func connectToSelectedDevice() {
+    func inspectSelectedBLEDevice() {
         guard let selectedDevice else {
             statusText = "No device selected."
             return
@@ -966,12 +1144,14 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
         connectedPeripheral = selectedDevice.peripheral
         connectedPeripheral?.delegate = self
 
-        statusText = "Connecting to \(selectedDevice.name)..."
+        statusText = "Inspecting BLE data for \(selectedDevice.name)..."
 
         centralManager?.connect(
             selectedDevice.peripheral,
             options: nil
+            
         )
+        scheduleConnectionTimeout(for: selectedDevice)
     }
     func peripheral(
         _ peripheral: CBPeripheral,
@@ -1032,6 +1212,36 @@ struct BluetoothDevice: Identifiable {
             return "Very weak"
         }
     }
+    var manufacturerText: String? {
+        guard let data = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data else {
+            return nil
+        }
+
+        guard data.count >= 2 else {
+            return nil
+        }
+
+        let companyID = UInt16(data[0]) | (UInt16(data[1]) << 8)
+
+        switch companyID {
+        case 0x004C:
+            return "Apple nearby device"
+        case 0x0006:
+            return "Microsoft nearby device"
+        case 0x0075:
+            return "Samsung nearby device"
+        case 0x000F:
+            return "Broadcom nearby device"
+        case 0x00E0:
+            return "Google nearby device"
+        case 0x0118:
+            return "JBL nearby device"
+        case 0x0131:
+            return "Tile tracker"
+        default:
+            return "Manufacturer ID: 0x\(String(companyID, radix: 16).uppercased())"
+        }
+    }
 
     var signalColor: Color {
         switch rssi {
@@ -1061,272 +1271,426 @@ struct BluetoothDevice: Identifiable {
         return services.map { $0.uuidString }.joined(separator: ", ")
     }
 }
-struct FindDeviceResult: Identifiable {
-    let id = UUID()
-    let title: String
-    let subtitle: String
-    let score: Int
-    let selection: SidebarSelection
-}
-struct FindMyDeviceView: View {
+
+
+
+struct BlueAssistSidebar: View {
     @ObservedObject var bluetoothManager: BluetoothManager
     @ObservedObject var macBluetoothManager: MacSystemBluetoothManager
+
+    let macDevices: [MacSystemBluetoothDevice]
+    let bleDevices: [BluetoothDevice]
+
     @Binding var selection: SidebarSelection?
 
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var searchName: String = ""
-    @State private var results: [FindDeviceResult] = []
-    @State private var hasSearched = false
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Find My Device")
-                .font(.largeTitle)
-                .bold()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                sidebarHeader
 
-            Text("Enter the device name. BlueAssist will show the best 10–20 candidates using paired devices, nearby BLE devices, signal strength, connectability, and saved nicknames.")
-                .foregroundStyle(.secondary)
-
-            TextField("Example: ACHYUT, AirPods, Samsung, JBL, TWS", text: $searchName)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    runSearch()
-                }
-
-            HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-
-                Spacer()
-
-                Button("Find Best Matches") {
-                    runSearch()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(searchName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-
-            Divider()
-
-            if hasSearched {
-                if results.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("No matches found")
-                            .font(.headline)
-
-                        Text("Try scanning again, use a shorter name, or select an Unknown Device and save a nickname.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    Text("Best Matches")
-                        .font(.headline)
-
-                    List(results) { result in
-                        Button {
-                            selection = result.selection
-                            applySelection(result.selection)
-
-                            dismiss()
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                bluetoothManager.startScanning()
-                                macBluetoothManager.loadPairedDevices()
-                            }
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(result.title)
-                                        .font(.headline)
-
-                                    Text(result.subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                Spacer()
-
-                                Text("\(result.score)%")
-                                    .font(.caption)
-                                    .foregroundStyle(scoreColor(result.score))
+                SidebarGlassSection(
+                    title: "Known Mac Devices",
+                    subtitle: "paired through macOS"
+                ) {
+                    if macDevices.isEmpty {
+                        SidebarEmptyRow(
+                            title: "No paired devices",
+                            subtitle: macBluetoothManager.statusText
+                        )
+                    } else {
+                        ForEach(macDevices) { device in
+                            SidebarMacDeviceRow(
+                                device: device,
+                                isSelected: selection == .mac(device.id)
+                            ) {
+                                selection = .mac(device.id)
                             }
                         }
-                        .buttonStyle(.plain)
                     }
-                    .frame(height: 340)
                 }
-            } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Tip")
+
+                SidebarGlassSection(
+                    title: "Nearby BLE Signals",
+                    subtitle: "visible low-energy broadcasts"
+                ) {
+                    if bleDevices.isEmpty {
+                        SidebarEmptyRow(
+                            title: "No BLE signals found",
+                            subtitle: bluetoothManager.statusText
+                        )
+                    } else {
+                        ForEach(bleDevices) { device in
+                            SidebarBLEDeviceRow(
+                                device: device,
+                                bluetoothManager: bluetoothManager,
+                                isSelected: selection == .ble(device.id)
+                            ) {
+                                selection = .ble(device.id)
+                            }
+                        }
+                    }
+                }
+
+                sidebarFooter
+            }
+            .padding(14)
+        }
+        .background {
+            ZStack {
+                Color(nsColor: .windowBackgroundColor)
+
+                LinearGradient(
+                    colors: [
+                        .blue.opacity(0.16),
+                        .clear,
+                        .cyan.opacity(0.08)
+                    ],
+                    startPoint: .topTrailing,
+                    endPoint: .bottomLeading
+                )
+
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .opacity(0.45)
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    private var sidebarHeader: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .font(.title2)
+                    .foregroundStyle(.blue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("BlueAssist")
                         .font(.headline)
 
-                    Text("Unknown devices are included in the results based on signal strength and connectability. Move the device closer and scan again to help identify it.")
+                    Text("Bluetooth diagnosis")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-        }
-        .padding()
-        .frame(width: 620, height: 560)
-    }
 
-    private func runSearch() {
-        let query = searchName
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-
-        guard !query.isEmpty else { return }
-
-        hasSearched = true
-
-        macBluetoothManager.loadPairedDevices()
-        bluetoothManager.startScanning()
-
-        let macResults = macBluetoothManager.pairedDevices.map { device in
-            FindDeviceResult(
-                title: device.name,
-                subtitle: "Paired Mac device • \(device.isConnected ? "Connected" : "Not connected")",
-                score: scoreMacDevice(device, query: query),
-                selection: .mac(device.id)
-            )
-        }
-
-        let bleResults = bluetoothManager.devices.map { device in
-            let shownName = bluetoothManager.displayName(for: device)
-
-            return FindDeviceResult(
-                title: shownName,
-                subtitle: "Nearby BLE • \(device.rssi) dBm • \(device.connectableText)",
-                score: scoreBLEDevice(device, shownName: shownName, query: query),
-                selection: .ble(device.id)
-            )
-        }
-
-        /*
-         Important:
-         Do NOT filter out low-score BLE unknown devices.
-         Unknown devices may be the user's target device.
-        */
-        results = (macResults + bleResults)
-            .sorted { first, second in
-                if first.score == second.score {
-                    return first.title.localizedCaseInsensitiveCompare(second.title) == .orderedAscending
-                }
-
-                return first.score > second.score
-            }
-            .prefix(20)
-            .map { $0 }
-    }
-
-    private func applySelection(_ newSelection: SidebarSelection) {
-        switch newSelection {
-        case .ble(let id):
-            if let device = bluetoothManager.devices.first(where: { $0.id == id }) {
-                bluetoothManager.selectDevice(device)
+                Spacer()
             }
 
-        case .mac:
-            bluetoothManager.selectedDevice = nil
+            HStack(spacing: 8) {
+                Label("\(bleDevices.count)", systemImage: "antenna.radiowaves.left.and.right")
+                Label("\(macDevices.count)", systemImage: "link")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .blueGlassPanel(cornerRadius: 22, padding: 14)
+    }
+
+    private var sidebarFooter: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(statusLabel, systemImage: statusIcon)
+                .font(.subheadline.bold())
+                .foregroundStyle(statusColor)
+
+            Text(bluetoothManager.statusText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .blueGlassPanel(cornerRadius: 20, padding: 14)
+    }
+
+    private var statusLabel: String {
+        switch bluetoothManager.bluetoothState {
+        case .poweredOn:
+            return "Bluetooth ready"
+        case .poweredOff:
+            return "Bluetooth off"
+        case .unauthorized:
+            return "Permission needed"
+        case .unsupported:
+            return "Unsupported"
+        case .resetting:
+            return "Resetting"
+        case .unknown:
+            return "Checking"
+        @unknown default:
+            return "Unknown"
         }
     }
 
-    private func scoreMacDevice(_ device: MacSystemBluetoothDevice, query: String) -> Int {
-        var score = nameScore(name: device.name, query: query)
-
-        if device.isConnected {
-            score += 15
+    private var statusIcon: String {
+        switch bluetoothManager.bluetoothState {
+        case .poweredOn:
+            return "checkmark.circle.fill"
+        case .poweredOff:
+            return "power.circle.fill"
+        case .unauthorized:
+            return "lock.circle.fill"
+        case .unsupported:
+            return "xmark.octagon.fill"
+        case .resetting:
+            return "arrow.clockwise.circle.fill"
+        case .unknown:
+            return "questionmark.circle.fill"
+        @unknown default:
+            return "questionmark.circle.fill"
         }
-
-        if device.isPaired {
-            score += 10
-        }
-
-        /*
-         Paired devices are useful, but do not let them completely bury
-         nearby BLE unknown devices.
-        */
-        return min(score, 90)
     }
 
-    private func scoreBLEDevice(_ device: BluetoothDevice, shownName: String, query: String) -> Int {
-        var score = nameScore(name: shownName, query: query)
-
-        if device.isConnectable {
-            score += 20
-        }
-
-        if device.hasAdvertisedServices {
-            score += 10
-        }
-
-        switch device.rssi {
-        case -55...0:
-            score += 35
-        case -70 ..< -55:
-            score += 25
-        case -85 ..< -70:
-            score += 15
-        case -95 ..< -85:
-            score += 8
-        default:
-            score += 3
-        }
-
-        /*
-         Unknown devices should still show up.
-         Strong/connectable unknown devices might be the user’s device.
-        */
-        if shownName.lowercased() == "unknown device" {
-            score += 8
-        }
-
-        return min(score, 100)
-    }
-
-    private func nameScore(name: String, query: String) -> Int {
-        let name = name.lowercased()
-        let query = query.lowercased()
-
-        if name == query {
-            return 60
-        }
-
-        if name.contains(query) {
-            return 50
-        }
-
-        if query.contains(name), name != "unknown device" {
-            return 40
-        }
-
-        let queryWords = query
-            .split(separator: " ")
-            .map { String($0) }
-
-        let matchedWords = queryWords.filter { word in
-            name.contains(word)
-        }
-
-        if !matchedWords.isEmpty {
-            return 20 + min(matchedWords.count * 8, 24)
-        }
-
-        return 0
-    }
-
-    private func scoreColor(_ score: Int) -> Color {
-        switch score {
-        case 75...100:
+    private var statusColor: Color {
+        switch bluetoothManager.bluetoothState {
+        case .poweredOn:
             return .green
-        case 40 ..< 75:
-            return .yellow
-        default:
+        case .poweredOff, .unauthorized, .unsupported:
             return .red
+        case .resetting, .unknown:
+            return .yellow
+        @unknown default:
+            return .secondary
         }
     }
 }
 
 
+struct SidebarGlassSection<Content: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.secondary)
+
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 4)
+
+            VStack(spacing: 8) {
+                content
+            }
+        }
+    }
+}
+struct SidebarSelectableGlassRow<Content: View>: View {
+    let isSelected: Bool
+    let action: () -> Void
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    isSelected
+                    ? Color.blue.opacity(0.38)
+                    : Color.white.opacity(0.045)
+                )
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(
+                    isSelected
+                    ? Color.blue.opacity(0.55)
+                    : Color.white.opacity(0.08),
+                    lineWidth: 1
+                )
+        }
+        .shadow(
+            color: isSelected ? .blue.opacity(0.28) : .clear,
+            radius: isSelected ? 12 : 0,
+            x: 0,
+            y: 5
+        )
+    }
+}
+
+struct SidebarMacDeviceRow: View {
+    let device: MacSystemBluetoothDevice
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        SidebarSelectableGlassRow(
+            isSelected: isSelected,
+            action: action
+        ) {
+            HStack(alignment: .top, spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(device.isConnected ? .green.opacity(0.18) : .red.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: iconName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(device.isConnected ? .green : .secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(device.name)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+
+                    HStack(spacing: 6) {
+                        StatusPill(
+                            text: device.isConnected ? "Connected" : "Not connected",
+                            color: device.isConnected ? .green : .red
+                        )
+
+                        StatusPill(
+                            text: device.isPaired ? "Paired" : "Not paired",
+                            color: device.isPaired ? .green : .red
+                        )
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var iconName: String {
+        let lowered = device.name.lowercased()
+
+        if lowered.contains("airpods") || lowered.contains("beats") {
+            return "airpodspro"
+        }
+
+        if lowered.contains("keyboard") {
+            return "keyboard"
+        }
+
+        if lowered.contains("mouse") {
+            return "computermouse"
+        }
+
+        if lowered.contains("trackpad") {
+            return "rectangle.and.hand.point.up.left"
+        }
+
+        if lowered.contains("ipad") || lowered.contains("iphone") {
+            return "iphone"
+        }
+
+        return "link"
+    }
+}
+struct SidebarBLEDeviceRow: View {
+    let device: BluetoothDevice
+    @ObservedObject var bluetoothManager: BluetoothManager
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        SidebarSelectableGlassRow(
+            isSelected: isSelected,
+            action: action
+        ) {
+            HStack(alignment: .top, spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(device.signalColor.opacity(0.16))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(device.signalColor)
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(bluetoothManager.displayName(for: device))
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+
+                    HStack(spacing: 6) {
+                        StatusPill(
+                            text: device.signalLabel,
+                            color: device.signalColor
+                        )
+
+                        StatusPill(
+                            text: "\(device.rssi) dBm",
+                            color: device.signalColor
+                        )
+                    }
+
+                    HStack(spacing: 6) {
+                        StatusPill(
+                            text: device.isConnectable ? "BLE inspectable" : "Signal only",
+                            color: device.isConnectable ? .green : .red
+                        )
+                    }
+
+                    if let manufacturer = device.manufacturerText {
+                        Text(manufacturer)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+}
+struct StatusPill: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(.caption2.bold())
+            .foregroundStyle(color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(
+                color.opacity(0.12),
+                in: Capsule()
+            )
+    }
+}
+
+struct SidebarEmptyRow: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.subheadline.bold())
+
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            Color.white.opacity(0.04),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(.white.opacity(0.07), lineWidth: 1)
+        }
+    }
+}
