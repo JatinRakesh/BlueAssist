@@ -16,8 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "917FFDF62FACD78800D9B58E"
-               BuildableName = "BlueAssistMac.app"
-               ReferencedContainer = "container:BlueAssistMac.xcodeproj">
+               BuildableName = "McBlueAssist.app"
+               BlueprintName = "McBlueAssist"
+               ReferencedContainer = "container:McBlueAssist.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,8 +36,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "917FFE052FACD78A00D9B58E"
-               BuildableName = "BlueAssistMacTests.xctest"
-               ReferencedContainer = "container:BlueAssistMac.xcodeproj">
+               BuildableName = "McBlueAssistTests.xctest"
+               BlueprintName = "McBlueAssistTests"
+               ReferencedContainer = "container:McBlueAssist.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -45,8 +47,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "917FFE0F2FACD78A00D9B58E"
-               BuildableName = "BlueAssistMacUITests.xctest"
-               ReferencedContainer = "container:BlueAssistMac.xcodeproj">
+               BuildableName = "McBlueAssistUITests.xctest"
+               BlueprintName = "McBlueAssistUITests"
+               ReferencedContainer = "container:McBlueAssist.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -67,8 +70,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "917FFDF62FACD78800D9B58E"
-            BuildableName = "BlueAssistMac.app"
-            ReferencedContainer = "container:BlueAssistMac.xcodeproj">
+            BuildableName = "McBlueAssist.app"
+            BlueprintName = "McBlueAssist"
+            ReferencedContainer = "container:McBlueAssist.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
@@ -86,8 +90,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "917FFDF62FACD78800D9B58E"
-            BuildableName = "BlueAssistMac.app"
-            ReferencedContainer = "container:BlueAssistMac.xcodeproj">
+            BuildableName = "McBlueAssist.app"
+            BlueprintName = "McBlueAssist"
+            ReferencedContainer = "container:McBlueAssist.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -31,18 +31,18 @@
 /* Begin PBXFileReference section */
 		916C716F2FED3A8C00D4EC23 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		916C717E2FED549F00D4EC23 /* BlueAssistTips.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = BlueAssistTips.storekit; path = BlueAssistMac/BlueAssistTips.storekit; sourceTree = "<group>"; };
-		917FFDF72FACD78800D9B58E /* BlueAssistMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueAssistMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		917FFE062FACD78A00D9B58E /* BlueAssistMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BlueAssistMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		917FFE102FACD78A00D9B58E /* BlueAssistMacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BlueAssistMacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		917FFDF72FACD78800D9B58E /* McBlueAssist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = McBlueAssist.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		917FFE062FACD78A00D9B58E /* McBlueAssistTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = McBlueAssistTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		917FFE102FACD78A00D9B58E /* McBlueAssistUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = McBlueAssistUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		91CEBF892FF3FFB2005C884D /* Exceptions for "BlueAssistMac" folder in "BlueAssistMac" target */ = {
+		91CEBF892FF3FFB2005C884D /* Exceptions for "BlueAssistMac" folder in "McBlueAssist" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 917FFDF62FACD78800D9B58E /* BlueAssistMac */;
+			target = 917FFDF62FACD78800D9B58E /* McBlueAssist */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -50,7 +50,7 @@
 		917FFDF92FACD78800D9B58E /* BlueAssistMac */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				91CEBF892FF3FFB2005C884D /* Exceptions for "BlueAssistMac" folder in "BlueAssistMac" target */,
+				91CEBF892FF3FFB2005C884D /* Exceptions for "BlueAssistMac" folder in "McBlueAssist" target */,
 			);
 			path = BlueAssistMac;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 		917FFDF82FACD78800D9B58E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				917FFDF72FACD78800D9B58E /* BlueAssistMac.app */,
-				917FFE062FACD78A00D9B58E /* BlueAssistMacTests.xctest */,
-				917FFE102FACD78A00D9B58E /* BlueAssistMacUITests.xctest */,
+				917FFDF72FACD78800D9B58E /* McBlueAssist.app */,
+				917FFE062FACD78A00D9B58E /* McBlueAssistTests.xctest */,
+				917FFE102FACD78A00D9B58E /* McBlueAssistUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -105,9 +105,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		917FFDF62FACD78800D9B58E /* BlueAssistMac */ = {
+		917FFDF62FACD78800D9B58E /* McBlueAssist */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 917FFE1A2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMac" */;
+			buildConfigurationList = 917FFE1A2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssist" */;
 			buildPhases = (
 				917FFDF32FACD78800D9B58E /* Sources */,
 				917FFDF42FACD78800D9B58E /* Frameworks */,
@@ -120,16 +120,16 @@
 			fileSystemSynchronizedGroups = (
 				917FFDF92FACD78800D9B58E /* BlueAssistMac */,
 			);
-			name = BlueAssistMac;
+			name = McBlueAssist;
 			packageProductDependencies = (
 			);
 			productName = BlueAssistMac;
-			productReference = 917FFDF72FACD78800D9B58E /* BlueAssistMac.app */;
+			productReference = 917FFDF72FACD78800D9B58E /* McBlueAssist.app */;
 			productType = "com.apple.product-type.application";
 		};
-		917FFE052FACD78A00D9B58E /* BlueAssistMacTests */ = {
+		917FFE052FACD78A00D9B58E /* McBlueAssistTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 917FFE1D2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMacTests" */;
+			buildConfigurationList = 917FFE1D2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssistTests" */;
 			buildPhases = (
 				917FFE022FACD78A00D9B58E /* Sources */,
 				917FFE032FACD78A00D9B58E /* Frameworks */,
@@ -140,16 +140,16 @@
 			dependencies = (
 				917FFE082FACD78A00D9B58E /* PBXTargetDependency */,
 			);
-			name = BlueAssistMacTests;
+			name = McBlueAssistTests;
 			packageProductDependencies = (
 			);
 			productName = BlueAssistMacTests;
-			productReference = 917FFE062FACD78A00D9B58E /* BlueAssistMacTests.xctest */;
+			productReference = 917FFE062FACD78A00D9B58E /* McBlueAssistTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		917FFE0F2FACD78A00D9B58E /* BlueAssistMacUITests */ = {
+		917FFE0F2FACD78A00D9B58E /* McBlueAssistUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 917FFE202FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMacUITests" */;
+			buildConfigurationList = 917FFE202FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssistUITests" */;
 			buildPhases = (
 				917FFE0C2FACD78A00D9B58E /* Sources */,
 				917FFE0D2FACD78A00D9B58E /* Frameworks */,
@@ -160,11 +160,11 @@
 			dependencies = (
 				917FFE122FACD78A00D9B58E /* PBXTargetDependency */,
 			);
-			name = BlueAssistMacUITests;
+			name = McBlueAssistUITests;
 			packageProductDependencies = (
 			);
 			productName = BlueAssistMacUITests;
-			productReference = 917FFE102FACD78A00D9B58E /* BlueAssistMacUITests.xctest */;
+			productReference = 917FFE102FACD78A00D9B58E /* McBlueAssistUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -190,7 +190,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 917FFDF22FACD78800D9B58E /* Build configuration list for PBXProject "BlueAssistMac" */;
+			buildConfigurationList = 917FFDF22FACD78800D9B58E /* Build configuration list for PBXProject "McBlueAssist" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -206,9 +206,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				917FFDF62FACD78800D9B58E /* BlueAssistMac */,
-				917FFE052FACD78A00D9B58E /* BlueAssistMacTests */,
-				917FFE0F2FACD78A00D9B58E /* BlueAssistMacUITests */,
+				917FFDF62FACD78800D9B58E /* McBlueAssist */,
+				917FFE052FACD78A00D9B58E /* McBlueAssistTests */,
+				917FFE0F2FACD78A00D9B58E /* McBlueAssistUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -266,12 +266,12 @@
 /* Begin PBXTargetDependency section */
 		917FFE082FACD78A00D9B58E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 917FFDF62FACD78800D9B58E /* BlueAssistMac */;
+			target = 917FFDF62FACD78800D9B58E /* McBlueAssist */;
 			targetProxy = 917FFE072FACD78A00D9B58E /* PBXContainerItemProxy */;
 		};
 		917FFE122FACD78A00D9B58E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 917FFDF62FACD78800D9B58E /* BlueAssistMac */;
+			target = 917FFDF62FACD78800D9B58E /* McBlueAssist */;
 			targetProxy = 917FFE112FACD78A00D9B58E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -413,8 +413,8 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 24234YQ5L2;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
@@ -462,8 +462,8 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 24234YQ5L2;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
@@ -514,7 +514,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BlueAssistMac.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BlueAssistMac";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/McBlueAssist.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/McBlueAssist";
 			};
 			name = Debug;
 		};
@@ -535,7 +535,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BlueAssistMac.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BlueAssistMac";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/McBlueAssist.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/McBlueAssist";
 			};
 			name = Release;
 		};
@@ -580,7 +580,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		917FFDF22FACD78800D9B58E /* Build configuration list for PBXProject "BlueAssistMac" */ = {
+		917FFDF22FACD78800D9B58E /* Build configuration list for PBXProject "McBlueAssist" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				917FFE182FACD78A00D9B58E /* Debug */,
@@ -589,7 +589,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		917FFE1A2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMac" */ = {
+		917FFE1A2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssist" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				917FFE1B2FACD78A00D9B58E /* Debug */,
@@ -598,7 +598,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		917FFE1D2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMacTests" */ = {
+		917FFE1D2FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssistTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				917FFE1E2FACD78A00D9B58E /* Debug */,
@@ -607,7 +607,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		917FFE202FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "BlueAssistMacUITests" */ = {
+		917FFE202FACD78A00D9B58E /* Build configuration list for PBXNativeTarget "McBlueAssistUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				917FFE212FACD78A00D9B58E /* Debug */,
