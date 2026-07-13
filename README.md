@@ -88,8 +88,7 @@ McBlueAssist is not designed to collect personal information from children.
 
 For support, feedback, bug reports, or privacy questions, contact:
 
-- jatinrakesh15@gmail.com
-- saumil707@gmail.com
+-mcblueassist@gmail.com
 
 When reporting an issue, please include:
 
